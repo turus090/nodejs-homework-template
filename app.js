@@ -2,12 +2,24 @@ const express = require("express");
 const logger = require("morgan");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const contactsRouter = require("./routes/api/contacts");
+
+const config = require("./config");
 
 const app = express();
 
 const formatsLogger = app.get("env") === "development" ? "dev" : "short";
+
+mongoose
+  .connect(config.mongoUrl)
+  .then(() => {
+    console.log("Database connection successful");
+  })
+  .catch((e) => {
+    process.exit(1);
+  });
 
 app.use(logger(formatsLogger));
 app.use(cors());
