@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 
 const contactsRouter = require("./routes/api/contacts");
 
+const usersRouter = require("./routes/api/users");
+
 const config = require("./config");
 
 const app = express();
@@ -29,6 +31,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use("/api/contacts", contactsRouter);
+app.use("/users", usersRouter);
 
 app.use((req, res) => {
   res.status(404).json({ message: "Not found" });
