@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 
 const contactsRouter = require("./routes/api/contacts");
 
-const usersRouter = require("./routes/api/users");
+const usersRouter = require("./routes/users");
 
 const config = require("./config");
 
