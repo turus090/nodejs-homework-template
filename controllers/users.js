@@ -1,9 +1,20 @@
 const UsersModel = require("../schemas/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const Joi = require("joi");
+
 const secretKey = "SomeText";
 
+const authSchema = Joi.object({
+  email: Joi.string().min(10).required(),
+  password: Joi.string().min(10).required(),
+});
+
 const register = async (req, res, next) => {
+  const { error } = authSchema.validate(req.body);
+  if (error) {
+    res.status(400).json({ message: "Invalid request body" });
+  }
   const { email, password } = req.body;
   const candidate = await UsersModel.findOne({ email });
 
@@ -26,6 +37,10 @@ const register = async (req, res, next) => {
 };
 
 const login = async (req, res) => {
+  const { error } = authSchema.validate(req.body);
+  if (error) {
+    res.status(400).json({ message: "Invalid request body" });
+  }
   const { email, password } = req.body;
   try {
     const userCandidate = await UsersModel.findOne({ email });
@@ -72,10 +87,7 @@ const logout = async (req, res) => {
   if (!token) {
     res.status(401).json({ message: "Token is not found" });
   }
-  jwt.verify(token, secretKey, async (err, email) => {
-    if (err) {
-      res.status(403).json({ message: err.message });
-    }
+  jwt.verify(token, secretKey, async ({ email }) => {
     try {
       await UsersModel.findOneAndUpdate({ email }, { token: null });
       res.status(200).json({ message: "logout successfull" });
@@ -84,5 +96,12 @@ const logout = async (req, res) => {
     }
   });
 };
-
-module.exports = { register, login, logout };
+const getUser = async (req, res) => {
+  try {
+    const user = await UsersModel.findOne({ email: req.email });
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(401).json({ message: "Not authorized" });
+  }
+};
+module.exports = { register, login, logout, getUser, checkToken };
