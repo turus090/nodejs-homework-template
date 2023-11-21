@@ -23,6 +23,8 @@ mongoose
     process.exit(1);
   });
 
+app.use("/avatars", express.static("./public/avatars"));
+
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());

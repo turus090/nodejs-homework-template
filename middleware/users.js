@@ -1,3 +1,7 @@
+const multer = require("multer");
+const jwt = require("jsonwebtoken");
+const secretKey = "SomeText";
+const gravatar = require("gravatar");
 const checkToken = (req, res, next) => {
   const token = req.header("Authorization");
   if (!token) {
@@ -12,4 +16,14 @@ const checkToken = (req, res, next) => {
   });
 };
 
-module.exports = { checkToken };
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/avatars");
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${gravatar.url(req.email)}.${file.mimetype}`);
+  },
+});
+const upload = multer({ storage });
+
+module.exports = { checkToken, upload };

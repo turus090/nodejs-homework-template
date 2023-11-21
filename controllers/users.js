@@ -2,8 +2,8 @@ const UsersModel = require("../schemas/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
+const gravatar = require("gravatar");
 const { checkToken } = require("../middleware/users");
-
 const secretKey = "SomeText";
 
 const authSchema = Joi.object({
@@ -27,6 +27,7 @@ const register = async (req, res, next) => {
       const user = new UsersModel({
         email,
         password: hashPassword,
+        avatarURL: gravatar.url(email, { protocol: "http" }),
       });
 
       await user.save();
@@ -91,4 +92,15 @@ const getUser = async (req, res) => {
     res.status(401).json({ message: "Not authorized" });
   }
 };
-module.exports = { register, login, logout, getUser, checkToken };
+
+const updateAvatar = async (req, res) => {
+  try {
+    const user = await UsersModel.findOne({ email: req.email });
+    res.status(200).json({
+      avatarURL: `http://localhost:3000/avatars/${user.avatarURL}`,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+module.exports = { register, login, logout, getUser, checkToken, updateAvatar };
