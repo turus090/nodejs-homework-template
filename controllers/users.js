@@ -2,6 +2,7 @@ const UsersModel = require("../schemas/users");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
+const { checkToken } = require("../middleware/users");
 
 const secretKey = "SomeText";
 
@@ -66,20 +67,6 @@ const login = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err });
   }
-};
-
-const checkToken = (req, res, next) => {
-  const token = req.header("Authorization");
-  if (!token) {
-    res.status(401).json({ message: "Token is not found" });
-  }
-  jwt.verify(token, secretKey, (err, email) => {
-    if (err) {
-      res.status(403).json({ message: "Invalid token" });
-    }
-    req.email = email;
-    next();
-  });
 };
 
 const logout = async (req, res) => {
