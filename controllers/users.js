@@ -3,12 +3,22 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Joi = require("joi");
 const gravatar = require("gravatar");
+const randomstring = require("randomstring");
+const elasticemail = require("elasticemail");
+
+const config = require("../config");
+
 const { checkToken } = require("../middleware/users");
 const secretKey = "SomeText";
 
 const authSchema = Joi.object({
   email: Joi.string().min(10).required(),
   password: Joi.string().min(10).required(),
+});
+
+const clientEmail = elasticemail.createClient({
+  username: config.emailUsername,
+  apiKey: config.emailAPI,
 });
 
 const register = async (req, res, next) => {
@@ -24,12 +34,27 @@ const register = async (req, res, next) => {
   } else {
     try {
       const hashPassword = await bcrypt.hash(password, 10);
-      const user = new UsersModel({
+      const userInfo = {
         email,
         password: hashPassword,
         avatarURL: gravatar.url(email, { protocol: "http" }),
-      });
+        verificationToken: randomstring.generate(10),
+      };
+      const user = new UsersModel(userInfo);
+      const msg = {
+        from: "taurus090@gmail.com",
+        from_name: "Vasia",
+        to: userInfo.email,
+        subject: "Verification  your account",
+        body_text: `Click here to verify your account: http://localhost:3000/auth/verify/${userInfo.verificationToken}`,
+      };
 
+      clientEmail.mailer.send(msg, (err, result) => {
+        if (err) {
+          return console.error(err);
+        }
+        console.log(result);
+      });
       await user.save();
       res.status(201).json({ message: "User saved successfully" });
     } catch (err) {
@@ -103,4 +128,27 @@ const updateAvatar = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-module.exports = { register, login, logout, getUser, checkToken, updateAvatar };
+
+const verify = async (req, res) => {
+  if (!req.body.email) {
+    return res.status(400).json({ message: "Bad request" });
+  }
+  try {
+    await UsersModel.findOneAndUpdate(
+      { email: req.body.email },
+      { verify: true }
+    );
+    res.status(200).json({ message: "Email has been confirm" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+module.exports = {
+  register,
+  login,
+  logout,
+  getUser,
+  checkToken,
+  updateAvatar,
+  verify,
+};
